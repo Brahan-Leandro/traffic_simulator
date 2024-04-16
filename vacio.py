@@ -36,7 +36,6 @@ class Vacio:
 			for m in range(0,carro.rapidez):
 				if (self.validar_futura_frontera(carro)):
 					if self.carros_A[carro.proxima_posicion()[0]][carro.proxima_posicion()[1]] == 0:
-						
 						self.carros_A[carro.proxima_posicion()[0]][carro.proxima_posicion()[1]]=1
 						self.carros_A[carro.posicion[0]][carro.posicion[1]]=0
 						if carro.tamano > 1:
@@ -45,7 +44,9 @@ class Vacio:
 								a_borrar.append([carro.posicion[0]-carro.salida[0],carro.posicion[1]-carro.salida[1]])
 
 						carro.avanzar()
-						self.condiciones_semaforos()
+						self.condiciones_semaforos(carro)
+						if carro.rapidez == 0:
+							break 
 						if carro.posicion == carro.celda_decision:
 							carro.cambiar_direccion()	
 					else:
@@ -84,6 +85,7 @@ class Vacio:
 				repidez = int(sqrt(velocidad_m[0]**2+velocidad_m[1]**2))
 				carro.velocidad = velocidad_m
 				carro.rapidez = repidez
+				self.condiciones_semaforos(carro)
 			if random()<self.probabilidad_frenar and carro.rapidez>0:
 				velocidad_m = [carro.velocidad[0]-carro.direccion[0],carro.velocidad[1]-carro.direccion[1]]
 				repidez = int(sqrt(velocidad_m[0]**2+velocidad_m[1]**2))
@@ -91,15 +93,16 @@ class Vacio:
 				carro.rapidez = repidez
 	def actualizar_semaforo(self,estado_semaforos):
 		self.estado_semaforos = estado_semaforos
-	def condiciones_semaforos(self):
-		print(self.estado_semaforos)
-		for carro in self.carros:
-			if carro.posicion[0]==int(self.tamano_mapa["x"]/2) and carro.posicion[1]== int(self.tamano_mapa["y"]/2)-1 and (self.estado_semaforos[0]==0 or self.estado_semaforos[0]==0):
-				carro.detenerse()
-			if carro.posicion[0]==int(self.tamano_mapa["x"]/2)-1 and carro.posicion[1]== int(self.tamano_mapa["y"]/2)+1 and (self.estado_semaforos[1]==0 or self.estado_semaforos[1]==0):
-				carro.detenerse()
-			if carro.posicion[0]==int(self.tamano_mapa["x"]/2)+1 and carro.posicion[1]== int(self.tamano_mapa["y"]/2)+2 and (self.estado_semaforos[2]==0 or self.estado_semaforos[2]==0):
-				carro.detenerse()
-			if carro.posicion[0]==int(self.tamano_mapa["x"]/2)+2 and carro.posicion[1]== int(self.tamano_mapa["y"]/2) and (self.estado_semaforos[3]==0 or self.estado_semaforos[3]==0):
-				carro.detenerse()
+	def condiciones_semaforos(self,carro):
+		#print(self.estado_semaforos)
+		#for carro in self.carros:
+		if carro.posicion[0]==int(self.tamano_mapa["x"]/2) and carro.posicion[1]== int(self.tamano_mapa["y"]/2)-2 and (self.estado_semaforos[0]==0 or self.estado_semaforos[0]==0):
+			carro.detenerse()
+		if carro.posicion[0]==int(self.tamano_mapa["x"]/2)-2 and carro.posicion[1]== int(self.tamano_mapa["y"]/2)+1 and (self.estado_semaforos[1]==0 or self.estado_semaforos[1]==0):
+			carro.detenerse()
+		if carro.posicion[0]==int(self.tamano_mapa["x"]/2)+1 and carro.posicion[1]== int(self.tamano_mapa["y"]/2)+3 and (self.estado_semaforos[2]==0 or self.estado_semaforos[2]==0):
+			carro.detenerse()
+		if carro.posicion[0]==int(self.tamano_mapa["x"]/2)+3 and carro.posicion[1]== int(self.tamano_mapa["y"]/2) and (self.estado_semaforos[3]==0 or self.estado_semaforos[3]==0):
+			carro.detenerse()
+		
 			 

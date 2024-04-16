@@ -7,12 +7,13 @@ from carro import Carro
 from vacio import Vacio
 from celda import Celda
 from semaforos import Sistema_Semaforos
-tamano_mapa = {"x":100, "y":100}
+tamano_mapa = {"x":60, "y":60}
 pasos = 1000
-N_densidad = 0.1		#probabilidad de la cantidad de carros que salen desde el norte
-S_densidad = 0.1		#probabilidad de la cantidad de carros que salen desde el sur
-W_densidad = 0.1  		#probabilidad de la cantidad de carros que salen desde el oeste
-E_densidad = 0.1		#probabilidad de la cantidad de carros que salen desde el Este
+rapidez_simulacion = 10  # en milisegundos
+N_densidad = 0.08		#probabilidad de la cantidad de carros que salen desde el norte
+S_densidad = 0.08		#probabilidad de la cantidad de carros que salen desde el sur
+W_densidad = 0.08  		#probabilidad de la cantidad de carros que salen desde el oeste
+E_densidad = 0.08		#probabilidad de la cantidad de carros que salen desde el Este
 
 N_E_probabilidad = 0.3
 N_W_probabilidad = 0.3
@@ -28,8 +29,8 @@ S_N_probabilidad = 1-S_E_probabilidad-S_W_probabilidad
 E_W_probabilidad = 1-E_S_probabilidad-E_N_probabilidad
 W_E_probabilidad = 1- W_N_probabilidad-W_S_probabilidad
 
-tiempo_verde = 30
-tiempo_amarillo = 10
+tiempo_verde = 15
+tiempo_amarillo = 2
 
 p_car_grande = 0.5
 rapidez_max = 2
@@ -118,7 +119,7 @@ def main():
 		semaforos.actualizar_estado(i)
 		espacio.actualizar_semaforo(semaforos.estado)
 		espacio.condiciones_carros()
-		espacio.condiciones_semaforos()
+		#espacio.condiciones_semaforos()
 		if random()<N_densidad:
 			espacio.agregar_carro(generar_carro("Norte"))
 		if random()<S_densidad:
@@ -128,10 +129,11 @@ def main():
 		if random()<E_densidad:
 			espacio.agregar_carro(generar_carro("Este"))
 		matris_plot = espacio.calcular_avance()	
+		print(i)
 		plt.clf()
 		plt.imshow(np.transpose(matris_plot),cmap="tab10")	
 	fig = plt.figure()
-	ani = an.FuncAnimation(fig,update,frames=pasos,interval=500,repeat=False)
+	ani = an.FuncAnimation(fig,update,frames=pasos,interval=rapidez_simulacion,repeat=False)
 	plt.show()
 
 if __name__=="__main__":
