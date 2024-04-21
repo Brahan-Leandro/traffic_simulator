@@ -94,15 +94,18 @@ class Vacio:
 	def actualizar_semaforo(self,estado_semaforos):
 		self.estado_semaforos = estado_semaforos
 	def condiciones_semaforos(self,carro):
-		#print(self.estado_semaforos)
-		#for carro in self.carros:
+
 		if carro.posicion[0]==int(self.tamano_mapa["x"]/2) and carro.posicion[1]== int(self.tamano_mapa["y"]/2)-2 and (self.estado_semaforos[0]==0 or self.estado_semaforos[0]==0):
-			carro.detenerse()
+			if carro.destino != [-1,0]:	
+				carro.detenerse()
 		if carro.posicion[0]==int(self.tamano_mapa["x"]/2)-2 and carro.posicion[1]== int(self.tamano_mapa["y"]/2)+1 and (self.estado_semaforos[1]==0 or self.estado_semaforos[1]==0):
-			carro.detenerse()
+			if carro.destino != [0,1]:
+				carro.detenerse()
 		if carro.posicion[0]==int(self.tamano_mapa["x"]/2)+1 and carro.posicion[1]== int(self.tamano_mapa["y"]/2)+3 and (self.estado_semaforos[2]==0 or self.estado_semaforos[2]==0):
-			carro.detenerse()
+			if carro.destino != [1,0]:
+				carro.detenerse()
 		if carro.posicion[0]==int(self.tamano_mapa["x"]/2)+3 and carro.posicion[1]== int(self.tamano_mapa["y"]/2) and (self.estado_semaforos[3]==0 or self.estado_semaforos[3]==0):
-			carro.detenerse()
+			if carro.destino != [0,-1]:
+				carro.detenerse()
 		
 			 
