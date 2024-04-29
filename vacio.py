@@ -42,8 +42,9 @@ class Vacio:
 							a_borrar.append([carro.posicion[0]-carro.direccion[0],carro.posicion[1]-carro.direccion[1]])
 							if carro.posicion == carro.celda_decision:
 								a_borrar.append([carro.posicion[0]-carro.salida[0],carro.posicion[1]-carro.salida[1]])
-
+						
 						carro.avanzar()
+						
 						self.condiciones_semaforos(carro)
 						if carro.rapidez == 0:
 							break 
@@ -93,6 +94,34 @@ class Vacio:
 				carro.rapidez = repidez
 	def actualizar_semaforo(self,estado_semaforos):
 		self.estado_semaforos = estado_semaforos
+		mx2 = int(self.tamano_mapa["x"]/2)
+		my2 = int(self.tamano_mapa["y"]/2)
+		if estado_semaforos[0] == 0:
+			self.carros_A[mx2-1-1][my2-2-1:my2-1] = [10,10]
+			self.carros_A[mx2-2-1][my2-2-1:my2-1] = [10,10]
+		elif estado_semaforos[0] != 0:
+			self.carros_A[mx2-1-1][my2-2-1:my2-1] = [20,20]
+			self.carros_A[mx2-2-1][my2-2-1:my2-1] = [20,20]
+		if estado_semaforos[1] == 0:
+			self.carros_A[mx2-1-1][my2+2+1:my2+4+1] = [10,10]
+			self.carros_A[mx2-2-1][my2+2+1:my2+4+1] = [10,10]
+		elif estado_semaforos[1] != 0:
+			self.carros_A[mx2-1-1][my2+2+1:my2+4+1] = [20,20]
+			self.carros_A[mx2-2-1][my2+2+1:my2+4+1] = [20,20]
+		if estado_semaforos[2] == 0:
+			self.carros_A[mx2+2+1][my2+2+1:my2+4+1] = [10,10]
+			self.carros_A[mx2+2+1+1][my2+2+1:my2+4+1] = [10,10]
+		elif estado_semaforos[2] != 0:
+			self.carros_A[mx2+2+1][my2+2+1:my2+4+1] = [20,20]
+			self.carros_A[mx2+2+1+1][my2+2+1:my2+4+1] = [20,20]
+		if estado_semaforos[3] == 0:
+			self.carros_A[mx2+2+1][my2-2-1:my2-1] = [10,10]
+			self.carros_A[mx2+2+1+1][my2-2-1:my2-1] = [10,10]
+		elif estado_semaforos[3] != 0:
+			self.carros_A[mx2+2+1][my2-2-1:my2-1] = [20,20]
+			self.carros_A[mx2+2+1+1][my2-2-1:my2-1] = [20,20]
+
+		print(estado_semaforos)
 	def condiciones_semaforos(self,carro):
 
 		if carro.posicion[0]==int(self.tamano_mapa["x"]/2) and carro.posicion[1]== int(self.tamano_mapa["y"]/2)-2 and (self.estado_semaforos[0]==0 or self.estado_semaforos[0]==0):
