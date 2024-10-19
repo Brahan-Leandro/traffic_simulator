@@ -24,7 +24,7 @@ from semaforos import Sistema_Semaforos # Clase que controla el estado de los se
 from parametros import *   # Contiene todos los parametros que especifican las caracteristicas de la simulacion 
 from generador_carros import generar_carro # Se es una duncion que encarga de intanciar nuevos carros						   
 def main():
-	cmap, norm = cmap_norm()    # cmap y norm se utilizan para determinar el color para cada de cada numero en la matris 
+	cmap, norm = cmap_norm()    # cmap y norm se utilizan para determinar el color para cada numero en la matriz
 								# a plotear y la funcion cmap_norm esta creada manu
 	cmap2, norm2 = cmap_norm2() # lo mismo que el anterior solo que se emplea para determinar los colores para plotear
 								# la matris de ocupacion 
@@ -132,7 +132,7 @@ def main():
 		plt.gca().set_aspect('equal', adjustable='box')  # Se utiliza para que cada celda
 		plt.axis('off')
 
-														 # de la matris tengan el mismo ancho y alto
+														 # de la matriz tengan el mismo ancho y alto
 	######### Se emplea para crear la animacion a la funcion FuncAnimation se le tiene que pasar la 
 	######### la funcion update, los frames, que son el numero de fotograms  
 	######### y el interval que es el tiempo que transcurre en cada fotograma 

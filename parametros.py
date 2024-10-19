@@ -1,5 +1,5 @@
 tamano_mapa = {"x":200, "y":200}
-pasos = 100
+pasos = 500
 rapidez_simulacion = 50  # en milisegundos
 N_densidad = 0.3		#probabilidad de la cantidad de carros que salen desde el norte
 S_densidad = 0.3		#probabilidad de la cantidad de carros que salen desde el sur
