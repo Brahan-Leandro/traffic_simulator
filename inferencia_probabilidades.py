@@ -1,143 +1,92 @@
 import pandas as pd
 import numpy as np
-from scipy.stats import dirichlet
 
 class ProbabilidadesGiroTipo:
     """
-    Clase para calcular la inferencia bayesiana de las probabilidades de giro,
-    diferenciadas por tipo de vehículo (Pequeño, Grande) o no diferenciadas.
+    Calcula la inferencia bayesiana de las probabilidades de giro
+    para cada entrada del cruce (Norte, Sur, Este, Oeste) y, de forma
+    opcional, diferenciando por tipo de vehículo (Pequeño/Grande).
+
+    Uso típico::
+        ip = ProbabilidadesGiroTipo("conteo.csv", usar_por_tipo=True)
+        ip.cargar_datos()
+        ip.procesar_datos()
+        params = ip.get_dict_parametros()  # -> dict listo para la simulación
     """
 
-    def __init__(self, ruta_archivo, usar_por_tipo=True):
-        """
-        Inicializa la clase con la ruta del archivo CSV de conteo.
-        """
+    # Orden fija de columnas en el CSV
+    DIRECCIONES = ("Izquierda", "Recto", "Derecha")
+
+    # Mapea cada combinación (Entrada, Dirección) al nombre de variable
+    # usado dentro de la simulación.  El orden interno es (Izq, Recto, Der).
+    MAPEOS = {
+        "Norte": ("N_W_probabilidad", "N_S_probabilidad", "N_E_probabilidad"),
+        "Sur": ("S_E_probabilidad", "S_N_probabilidad", "S_W_probabilidad"),
+        "Este": ("E_N_probabilidad", "E_W_probabilidad", "E_S_probabilidad"),
+        "Oeste": ("W_S_probabilidad", "W_E_probabilidad", "W_N_probabilidad"),
+    }
+
+    def __init__(self, ruta_archivo: str, usar_por_tipo: bool = True) -> None:
         self.ruta = ruta_archivo
         self.usar_por_tipo = usar_por_tipo
-        self.datos = None
-        self.resultados = {}
+        self.datos: pd.DataFrame | None = None
+        # Dict[Tuple[Entrada, Tipo] | str, np.ndarray]
+        self.resultados: dict = {}
 
-    def cargar_datos(self):
-        """
-        Carga los datos del archivo CSV.
-        """
-        try:
-            self.datos = pd.read_csv(self.ruta, delimiter=';')
-            print(f"Datos cargados correctamente desde {self.ruta}")
-        except Exception as e:
-            print(f"Error al cargar los datos: {e}")
+    # ---------------------------------------------------------------------
+    # ETL
+    # ---------------------------------------------------------------------
+    def cargar_datos(self) -> None:
+        """Carga el CSV de conteo en memoria."""
+        self.datos = pd.read_csv(self.ruta, delimiter=";")
 
-    def inferir_probabilidades(self, df_ciclos):
-        """
-        Realiza inferencia bayesiana para un subconjunto de datos de ciclos.
-        """
-        alpha_prior = np.array([1, 1, 1])
-        conteos = df_ciclos[["Izquierda", "Recto", "Derecha"]].sum().values
+    # ---------------------------------------------------------------------
+    # Inferencia
+    # ---------------------------------------------------------------------
+    def _inferir_probabilidades(self, df_ciclos: pd.DataFrame) -> np.ndarray:
+        """Devuelve la media posterior Dirichlet para (Izq, Recto, Der)."""
+        alpha_prior = np.ones(3)  # prior uniforme
+        conteos = df_ciclos[list(self.DIRECCIONES)].sum().values
         alpha_post = alpha_prior + conteos
+        return alpha_post / alpha_post.sum()
 
-        muestras = np.random.dirichlet(alpha_post, size=5000)
-        media = alpha_post / np.sum(alpha_post)
-
-        intervalos = {}
-        for i, direccion in enumerate(["Izquierda", "Recto", "Derecha"]):
-            lower = np.percentile(muestras[:, i], 2.5)
-            upper = np.percentile(muestras[:, i], 97.5)
-            intervalos[direccion] = (lower, upper)
-
-        return media, intervalos
-
-    def procesar_datos(self):
-        """
-        Procesa los datos y calcula las probabilidades por entrada y tipo de vehículo.
-        """
+    def procesar_datos(self) -> None:
+        """Agrupa los datos y rellena ``self.resultados`` con medias."""
         if self.datos is None:
-            print("Datos no cargados.")
-            return
+            raise RuntimeError("Debe llamar cargar_datos() primero.")
 
-        if self.usar_por_tipo:
-            agrupamiento = ["Entrada", "Tipo"]
-        else:
-            # Eliminar columna Tipo para no afectar agrupamiento
-            if "Tipo" in self.datos.columns:
-                self.datos = self.datos.drop(columns=["Tipo"])
-            agrupamiento = ["Entrada"]
+        agrupadores = ["Entrada", "Tipo"] if self.usar_por_tipo else ["Entrada"]
 
-        for clave, grupo in self.datos.groupby(agrupamiento):
-            media, intervalos = self.inferir_probabilidades(grupo)
-            self.resultados[clave] = {
-                "Media": media,
-                "Intervalos": intervalos
-            }
+        for clave, grupo in self.datos.groupby(agrupadores):
+            media = self._inferir_probabilidades(grupo)
+            self.resultados[clave] = media
 
-    def mostrar_resultados(self):
+    # ---------------------------------------------------------------------
+    # API pública
+    # ---------------------------------------------------------------------
+    def get_dict_parametros(self) -> dict:
+        """Devuelve un dict llano para la simulación.
+
+        *Si ``usar_por_tipo`` es ``True``* las claves terminan en
+        ``_peq`` o ``_gran``.
         """
-        Muestra los resultados de la inferencia.
-        """
-        for clave, datos in self.resultados.items():
+        if not self.resultados:
+            raise RuntimeError("Debe llamar procesar_datos() primero.")
+
+        plano: dict[str, float] = {}
+        for clave, media in self.resultados.items():
+            # Desempaca Entrada y Tipo (si aplica)
             if self.usar_por_tipo:
                 entrada, tipo = clave
-                print(f"\nEntrada: {entrada} | Tipo: {tipo}")
+                sufijo = "_peq" if tipo.lower() == "pequeño" else "_gran"
             else:
-                entrada = clave[0] if isinstance(clave, tuple) else clave
-                print(f"\nEntrada: {entrada}")
+                entrada = clave  # type: ignore[assignment]
+                sufijo = ""
 
-            print(f"Media posterior:")
-            print(f"Izquierda: {datos['Media'][0]:.3f}")
-            print(f"Recto: {datos['Media'][1]:.3f}")
-            print(f"Derecha: {datos['Media'][2]:.3f}")
-            print("Intervalos de credibilidad al 95%:")
-            for direccion, (lower, upper) in datos["Intervalos"].items():
-                print(f"{direccion}: [{lower:.3f}, {upper:.3f}]")
+            izq_name, recto_name, der_name = self.MAPEOS[entrada]
 
-    def generar_bloque_parametros(self):
-        """
-        Genera el bloque de código para pegar en parametros.py
-        """
-        print("\n# Bloque para parametros.py\n")
-        for clave, datos in self.resultados.items():
-            if self.usar_por_tipo:
-                entrada, tipo = clave
-                tipo_tag = "peq" if tipo.lower() == "pequeño" else "gran"
-            else:
-                entrada = clave[0] if isinstance(clave, tuple) else clave
-                tipo_tag = None
+            plano[f"{izq_name}{sufijo}"] = float(media[0])
+            plano[f"{recto_name}{sufijo}"] = float(media[1])
+            plano[f"{der_name}{sufijo}"] = float(media[2])
 
-            media = datos['Media']
-
-            print(f"# Entrada: {entrada}")
-            if entrada == "Norte":
-                if tipo_tag:
-                    print(f"N_W_probabilidad_{tipo_tag} = {media[0]:.3f}")
-                    print(f"N_E_probabilidad_{tipo_tag} = {media[2]:.3f}")
-                    print(f"N_S_probabilidad_{tipo_tag} = {media[1]:.3f}\n")
-                else:
-                    print(f"N_W_probabilidad = {media[0]:.3f}")
-                    print(f"N_E_probabilidad = {media[2]:.3f}")
-                    print(f"N_S_probabilidad = {media[1]:.3f}\n")
-            elif entrada == "Sur":
-                if tipo_tag:
-                    print(f"S_E_probabilidad_{tipo_tag} = {media[0]:.3f}")
-                    print(f"S_W_probabilidad_{tipo_tag} = {media[2]:.3f}")
-                    print(f"S_N_probabilidad_{tipo_tag} = {media[1]:.3f}\n")
-                else:
-                    print(f"S_E_probabilidad = {media[0]:.3f}")
-                    print(f"S_W_probabilidad = {media[2]:.3f}")
-                    print(f"S_N_probabilidad = {media[1]:.3f}\n")
-            elif entrada == "Este":
-                if tipo_tag:
-                    print(f"E_N_probabilidad_{tipo_tag} = {media[0]:.3f}")
-                    print(f"E_S_probabilidad_{tipo_tag} = {media[2]:.3f}")
-                    print(f"E_W_probabilidad_{tipo_tag} = {media[1]:.3f}\n")
-                else:
-                    print(f"E_N_probabilidad = {media[0]:.3f}")
-                    print(f"E_S_probabilidad = {media[2]:.3f}")
-                    print(f"E_W_probabilidad = {media[1]:.3f}\n")
-            elif entrada == "Oeste":
-                if tipo_tag:
-                    print(f"W_S_probabilidad_{tipo_tag} = {media[0]:.3f}")
-                    print(f"W_N_probabilidad_{tipo_tag} = {media[2]:.3f}")
-                    print(f"W_E_probabilidad_{tipo_tag} = {media[1]:.3f}\n")
-                else:
-                    print(f"W_S_probabilidad = {media[0]:.3f}")
-                    print(f"W_N_probabilidad = {media[2]:.3f}")
-                    print(f"W_E_probabilidad = {media[1]:.3f}\n")
+        return plano
