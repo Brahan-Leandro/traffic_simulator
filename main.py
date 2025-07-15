@@ -1,3 +1,6 @@
+#--------------------------------------------------------#
+# --- BLOQUE 0: IMPORTACIONES Y CONFIGURACIÓN GLOBAL --- #
+#--------------------------------------------------------#
 """
 Este archivo contiene la funcion principal donde se empieza a correr el programa
 Dentro de la funcion main hay otra funcion llamada update, aquella funcion es 
@@ -22,8 +25,13 @@ from vacio import Vacio # Clase especifica el espacio, el cual contiene
 #los carros y ademas se encarga de calcular  la logica del estado posterior mediante la funcion calcular_avance
 from semaforos import Sistema_Semaforos # Clase que controla el estado de los semaforos
 from parametros import *   # Contiene todos los parametros que especifican las caracteristicas de la simulacion 
-from generador_carros import generar_carro # Se es una duncion que encarga de intanciar nuevos carros						   
+from generador_carros import generar_carro # Se es una duncion que encarga de intanciar nuevos carros
+
+# FUNCIÓN PRINCIPAL						   
 def main():
+#--------------------------------------------------------#
+# -------------- BLOQUE 1: INICIALIZACIÓN -------------- #
+#--------------------------------------------------------#
 	cmap, norm = cmap_norm()    # cmap y norm se utilizan para determinar el color para cada numero en la matriz
 								# a plotear y la funcion cmap_norm esta creada manu
 	cmap2, norm2 = cmap_norm2() # lo mismo que el anterior solo que se emplea para determinar los colores para plotear
@@ -46,15 +54,25 @@ def main():
 	flujo_entrada_Este =[]
 	flujo_entrada_Oeste =[]
 	
+#--------------------------------------------------------#
+# ----- BLOQUE 2: FUNCIÓN DE ACTUALIZACIÓN POR PASO ---- #
+#--------------------------------------------------------#
 	def update(i): 
 		# Esta funcion se es la que se encarga de controlar el ciclo general del programa
 		# se llama en cada instante y las operaciones que hace son en el siguiente orden
+		
+#--------------------------------------------------------#
+# --- BLOQUE 3: ACTUALIZACIÓN DEL ESTADO DEL SISTEMA --- #
+#--------------------------------------------------------#
 		espacio.reset_velocidad()
 		semaforos.actualizar_estado(i) # Actualizar el estado de los semaforos es decir en cada instante el objeto semaforos 
 									   # va a cambiar segun vaya avanzando la simulacion 
 		espacio.actualizar_semaforo(semaforos.estado) # Se le da informacion al manejador general (Espacio) del estado del semaforo
 		espacio.condiciones_carros()  # Se revisa las condiciones de frenado
 		
+#--------------------------------------------------------#
+# ----------- BLOQUE 4: GENERACIÓN DE CARROS ----------- #
+#--------------------------------------------------------#
 		# las siguientes condiciones que determinan si se debe agregar un nuevo carro a la salida Norte, Sur, Oeste, Este respectivamente 
 		# al considerar la probabilidad N_densidad,S_densidad, W_densidad,E_densidad
 		if random()<N_densidad:
@@ -66,6 +84,9 @@ def main():
 		if random()<E_densidad:
 			espacio.agregar_carro(generar_carro("Este"))
 			
+#--------------------------------------------------------#
+# ----- BLOQUE 5: MOVIMIENTO Y CÁLCULO DE MÉTRICAS ----- #
+#--------------------------------------------------------#
 		matris_plot,v_p_norte,v_p_sur,v_p_este,v_p_oeste = espacio.calcular_avance() #El espacio calcula la matris siguiente a plotear 
 		############## Se extrae la ocupacion de los carros para las 4 vias  en el instante i
 		ocupacion_norte_sur[:,i]=matris_plot[int(tamano_mapa["x"]/2)]
@@ -92,6 +113,9 @@ def main():
 		flujo_entrada_Oeste.append(densidad_entrada_Oeste[-1]*v_p_oeste*medida_de_una_celda)
 		##############
 		
+#--------------------------------------------------------#
+# -------- BLOQUE 6: VISUALIZACIÓN DE ANIMACIÓN -------- #
+#--------------------------------------------------------#
 		plt.clf() # Se limpia la pantalla que se va a plotear, es decir para generar la animacion se
 				  # debe plotear el fotograma anterior y se plotea la nueva matris
 		#print(i)
@@ -137,11 +161,18 @@ def main():
 	######### la funcion update, los frames, que son el numero de fotograms  
 	######### y el interval que es el tiempo que transcurre en cada fotograma 
 	#########  repeat = False es para que una vez finalicen los fotogramas no se repita nuevamente la simulacion
+	
+#--------------------------------------------------------#
+# ------ BLOQUE 7: EJECUÓN DE ANIMACIÓN PRINCIPAL ------ #
+#--------------------------------------------------------#
 	fig = plt.figure(200) 
 	ani = an.FuncAnimation(fig,update,frames=pasos,interval=rapidez_simulacion,repeat=False) 
 	plt.show()
 	#########
 	
+#--------------------------------------------------------#
+# ----------- BLOQUE 8: POST-PROCESAMIENTO ------------- #
+#--------------------------------------------------------#
 	######### Se plotea Las graficas como densidad o ocupacion
 	fig2 = plt.figure("Densidad Norte Sur Dos Semaforos")
 	plt.plot(T,densidad_entrada_Norte,label="Entrada norte")
@@ -186,6 +217,7 @@ def main():
 	
 	plt.show()
 
+# FUNCIONES AUXILIARES DE COLORES Y DENSIDAD
 def calcular_densidad(matris,via):
 	# Esta Funcion lo que hace es contar el numero de carros en cada via 
 	# y retorna los la cantidad de carros dividida el tamaño de la via lo que se le llama densidad
